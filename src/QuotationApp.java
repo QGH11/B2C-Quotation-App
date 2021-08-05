@@ -10,6 +10,7 @@ public class QuotationApp extends JFrame{
     private JTextField textField2;
     private JCheckBox checkBox1;
     private JCheckBox checkBox2;
+    private JLabel CustomerTitle;
 
     public QuotationApp(String title) {
         super(title);
