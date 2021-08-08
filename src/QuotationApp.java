@@ -5,8 +5,7 @@ import org.json.simple.parser.ParseException;
 
 import javax.swing.*;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.io.*;
 import java.util.Iterator;
 
@@ -22,10 +21,11 @@ public class QuotationApp extends JFrame{
     private JTextField quotationStatusTextField;
     private JCheckBox emergencyCheckBox;
     private JCheckBox financialCheckBox;
-    private JLabel businessSideLabel;
     private JTextField quotationDescriptionTextField;
-    private JLabel customerSideLabel;
     private JLabel customerSubmitStatusLabel;
+    private JTextArea quotationStatusTextArea;
+    private JLabel customerSideLabel;
+    private JLabel businessSideLabel;
     private JLabel businessSubmitStatusLabel;
     private JPanel QuotationPanel;
     private static FileWriter file;
@@ -108,6 +108,80 @@ public class QuotationApp extends JFrame{
                 }
             }
         });
+
+        businessQuotationList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                // show the full items of a quotation
+
+                String quotationTitle;
+                String quotationDescription;
+                String category;
+                Boolean emergencyStatus;
+                Boolean financialStatus;
+
+                JSONObject tempJObject = new JSONObject();
+                DefaultListModel listModel = new DefaultListModel();
+
+                int quotationIndex = businessQuotationList.getSelectedIndex();
+                tempJObject = (JSONObject) tempQuotationList.get(quotationIndex);
+                quotationTitle = (String) tempJObject.get("Title");
+                quotationDescription = (String) tempJObject.get("Description");
+                category = (String) tempJObject.get("Category");
+                emergencyStatus = (Boolean) tempJObject.get("EmergencyStatus");
+                financialStatus = (Boolean) tempJObject.get("FinancialStatus");
+
+                listModel.addElement("Title: " + quotationTitle);
+                listModel.addElement("Description: " + quotationDescription);
+                listModel.addElement("Category: " + category);
+                listModel.addElement("Emergency: " + emergencyStatus);
+                listModel.addElement("Money is not a problem: " + financialStatus);
+
+                detailedQuotationList.setModel(listModel);
+            }
+        });
+
+        businessSubmitButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int quotationIndex = businessQuotationList.getSelectedIndex();
+
+                if (quotationIndex != -1) {
+                    String quotationStatus = quotationStatusTextField.getText();
+
+                    JSONObject tempJObject;
+                    tempJObject = (JSONObject) tempQuotationList.get(quotationIndex);
+                    String quotationTitle = (String) tempJObject.get("Title");
+
+                    // remove the selected quotation
+                    tempQuotationList.remove(quotationIndex);
+                    quotationSum.put("QuotationList", tempQuotationList);
+
+                    try {
+                        // Constructs a FileWriter given a file name, using the platform's default charset
+                        file = new FileWriter("./src/quotationList.json");
+                        file.write(quotationSum.toJSONString());
+                        file.flush();
+                        file.close();
+                    }
+                    catch (IOException d) {
+                        d.printStackTrace();
+                    }
+
+                    // set the quotation status
+                    quotationStatusTextArea.append("Quotation Title: " + quotationTitle);
+                    quotationStatusTextArea.append("\nQuotation Status: " + quotationStatus);
+
+                    //update the Jlist
+                    readJson();
+                    printQuotationList();
+                }
+                else {
+                    JOptionPane.showMessageDialog(null,"ERROR: CHOOSE A QUOTATION FROM THE LIST");
+                }
+            }
+        });
     }
 
     // quotation class
@@ -159,23 +233,16 @@ public class QuotationApp extends JFrame{
         catch(Exception e) {e.printStackTrace();}
     }
 
+    // print the title of quotations
     public void printQuotationList() {
         String quotationTitle;
-        String quotationDescription;
-        String category;
-        Boolean emergencyStatus;
-        Boolean financialStatus;
 
-        JSONObject tempJObject = new JSONObject();
+        JSONObject tempJObject;
         DefaultListModel listModel = new DefaultListModel();
 
         for (int i  = 0; i < tempQuotationList.size(); i++ ) {
             tempJObject = (JSONObject) tempQuotationList.get(i);
             quotationTitle = (String) tempJObject.get("Title");
-//            quotationDescription = (String) tempJObject.get("Description");
-//            category = (String) tempJObject.get("Category");
-//            emergencyStatus = (Boolean) tempJObject.get("EmergencyStatus");
-//            financialStatus = (Boolean) tempJObject.get("FinancialStatus");
             listModel.addElement(quotationTitle);
         }
         businessQuotationList.setModel(listModel);
@@ -183,7 +250,7 @@ public class QuotationApp extends JFrame{
 
     public static void main(String[] args) {
         JFrame frame = new QuotationApp("B2C Quotation App");
-        frame.setBounds(400, 100, 1000, 800);
+        frame.setBounds(400, 100, 800, 700);
         frame.setVisible(true);
     }
 }
